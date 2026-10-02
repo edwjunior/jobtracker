@@ -33,6 +33,12 @@ Variables necesarias (Supabase → Project Settings → API):
 | `NEXT_PUBLIC_SUPABASE_URL` | URL del proyecto |
 | `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | Clave publishable (o `anon`) |
 
+### Preparar el proyecto Supabase
+
+1. Aplica `supabase/migrations/20261002000000_init.sql` (SQL Editor del panel, o `supabase db push` con la CLI). Crea las tablas, las políticas RLS y el bucket privado `profile-docs`.
+2. *Authentication → Providers → Email*: desactiva **Allow new users to sign up** (la app es de un solo usuario).
+3. *Authentication → Users → Add user*: crea tu cuenta con email y contraseña. Con esas credenciales entras en `/login`.
+
 ## Despliegue en Vercel
 
 1. Importa el repositorio en [vercel.com/new](https://vercel.com/new) (detecta Next.js automáticamente).
