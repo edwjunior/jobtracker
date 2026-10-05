@@ -2,11 +2,16 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import { analyzeOffer, MAX_OFFER_CHARS, MIN_OFFER_CHARS } from "@/lib/analysis";
 import { requireUser } from "@/lib/auth";
+import { UserError } from "@/lib/errors";
+import { getFreshContext } from "@/lib/profile";
 import { createClient } from "@/lib/supabase/server";
 import { isEstado, MOTIVOS, type Estado, type Fuente } from "@/lib/jobs";
 
 export type JobFormState = { error?: string } | undefined;
+// Devuelve lo escrito para reponerlo si falla (React vacía el formulario tras la acción).
+export type AnalyzeFormState = { error?: string; descripcion?: string; url?: string } | undefined;
 export type MoveResult = { error?: string };
 
 const HTTP_URL = /^https?:\/\/\S+$/i;
@@ -164,4 +169,57 @@ export async function moveJob(
   revalidatePath("/");
   revalidatePath(`/ofertas/${id}`);
   return {};
+}
+
+// Pegar la descripción → la IA compara con el perfil → se crea la oferta con todo rellenado.
+export async function analyzeAndCreate(
+  _prev: AnalyzeFormState,
+  formData: FormData,
+): Promise<AnalyzeFormState> {
+  const user = await requireUser();
+
+  const descripcion = text(formData, "descripcion");
+  const url = text(formData, "url");
+  const keep = { descripcion, url };
+
+  if (descripcion.length < MIN_OFFER_CHARS) {
+    return { ...keep, error: `Pega la descripción completa de la oferta (mínimo ${MIN_OFFER_CHARS} caracteres).` };
+  }
+  if (descripcion.length > MAX_OFFER_CHARS) {
+    return { ...keep, error: `La descripción supera los ${MAX_OFFER_CHARS} caracteres.` };
+  }
+  if (url && !HTTP_URL.test(url)) {
+    return { ...keep, error: "El enlace a la oferta debe empezar por http:// o https://." };
+  }
+
+  const supabase = await createClient();
+  let jobId: string;
+
+  try {
+    const profile = await getFreshContext(supabase, user.id);
+    const analysis = await analyzeOffer(profile.content, descripcion);
+
+    const { data, error } = await supabase
+      .from("jobs")
+      .insert({
+        ...analysis,
+        estado: "guardada",
+        url,
+        descripcion,
+        analysis_status: "done",
+        analyzed_with_context_hash: profile.hash,
+      })
+      .select("id")
+      .single();
+    if (error) throw error;
+
+    jobId = data.id;
+  } catch (error) {
+    if (error instanceof UserError) return { ...keep, error: error.message };
+    console.error("analyzeAndCreate", error);
+    return { ...keep, error: "No se pudo analizar la oferta. Inténtalo de nuevo." };
+  }
+
+  revalidatePath("/");
+  redirect(`/ofertas/${jobId}`);
 }
