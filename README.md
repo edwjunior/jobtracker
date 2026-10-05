@@ -33,6 +33,22 @@ Variables necesarias (Supabase → Project Settings → API):
 | `NEXT_PUBLIC_SUPABASE_URL` | URL del proyecto |
 | `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | Clave publishable (o `anon`) |
 
+### Preparar el proyecto Supabase
+
+1. Aplica `supabase/migrations/20261002000000_init.sql` (SQL Editor del panel, o `supabase db push` con la CLI). Crea las tablas, las políticas RLS y el bucket privado `profile-docs`.
+2. *Authentication → Providers → Email*: desactiva **Allow new users to sign up** (la app es de un solo usuario).
+3. *Authentication → Users → Add user*: crea tu cuenta con email y contraseña. Con esas credenciales entras en `/login`.
+
+### Análisis con IA (Gemini)
+
+Añadir una oferta se hace pegando su descripción: la IA la compara con tu perfil y rellena empresa, puesto, score, competencias, gaps, ventajas, desventajas y notas.
+
+1. Crea una clave en [Google AI Studio](https://aistudio.google.com/apikey) y ponla en `.env.local` como `GEMINI_API_KEY`. Es solo de servidor: nunca con prefijo `NEXT_PUBLIC_`.
+2. Elige un modelo y ponlo en `GEMINI_MODEL`. Lista los disponibles para tu clave con `curl -H "x-goog-api-key: $GEMINI_API_KEY" https://generativelanguage.googleapis.com/v1beta/models`.
+3. En **Perfil**, sube tu CV y tu LinkedIn en PDF (y notas si quieres). Los PDFs se envían a Gemini al generar el perfil; después solo viaja el texto del perfil y de cada oferta.
+
+Privacidad: según los términos de Gemini, en el EEE, Suiza y el Reino Unido se aplican las condiciones de los servicios de pago incluso con el plan gratuito (Google no usa tus datos para mejorar sus productos). Confírmalo en los ajustes de tu cuenta.
+
 ## Despliegue en Vercel
 
 1. Importa el repositorio en [vercel.com/new](https://vercel.com/new) (detecta Next.js automáticamente).
