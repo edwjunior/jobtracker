@@ -6,15 +6,15 @@ export async function updateSession(request: NextRequest) {
 
   // Sin variables de entorno (p. ej. antes de crear .env.local) no hay sesión que refrescar.
   if (
-    !process.env.NEXT_PUBLIC_SUPABASE_URL ||
-    !process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY
+    !process.env.SUPABASE_URL ||
+    !process.env.SUPABASE_PUBLISHABLE_KEY
   ) {
     return response;
   }
 
   const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!,
+    process.env.SUPABASE_URL!,
+    process.env.SUPABASE_PUBLISHABLE_KEY!,
     {
       cookies: {
         getAll() {

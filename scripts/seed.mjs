@@ -5,17 +5,17 @@
 import { readFileSync } from "node:fs";
 import { createClient } from "@supabase/supabase-js";
 
-const { NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY, SEED_EMAIL, SEED_PASSWORD } =
+const { SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, SEED_EMAIL, SEED_PASSWORD } =
   process.env;
 
-if (!NEXT_PUBLIC_SUPABASE_URL || !NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY) {
+if (!SUPABASE_URL || !SUPABASE_PUBLISHABLE_KEY) {
   throw new Error("Faltan las variables de Supabase en .env.local.");
 }
 if (!SEED_EMAIL || !SEED_PASSWORD) {
   throw new Error("Define SEED_EMAIL y SEED_PASSWORD (tu usuario de Supabase).");
 }
 
-const supabase = createClient(NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY);
+const supabase = createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
 
 const { error: authError } = await supabase.auth.signInWithPassword({
   email: SEED_EMAIL,
